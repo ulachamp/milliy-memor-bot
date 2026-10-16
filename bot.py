@@ -284,18 +284,13 @@ async def buttons(
 # ==============================
 
 def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    app = (
-        ApplicationBuilder()
-        .token(BOT_TOKEN)
-        .concurrent_updates(False)
-        .build()
-    )
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("myid", myid))
 
     admin_handler = ConversationHandler(
-        entry_points=[
-            CommandHandler("admin", admin)
-        ],
+        entry_points=[CommandHandler("admin", admin)],
         states={
             WAIT_PASSWORD: [
                 MessageHandler(
@@ -304,17 +299,7 @@ def main():
                 )
             ]
         },
-        fallbacks=[
-            CommandHandler("start", start)
-        ],
-    )
-
-    app.add_handler(
-        CommandHandler("start", start)
-    )
-
-    app.add_handler(
-        CommandHandler("myid", myid)
+        fallbacks=[]
     )
 
     app.add_handler(admin_handler)
@@ -326,14 +311,12 @@ def main():
         )
     )
 
-    print("🏛 MILLIY ME'MOR GROUP BOT STARTING...")
-
     app.run_webhook(
         listen="0.0.0.0",
         port=PORT,
         url_path="telegram",
         webhook_url=f"{WEBHOOK_URL}/telegram",
-        drop_pending_updates=True,
+        drop_pending_updates=True
     )
 
 
