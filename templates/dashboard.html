@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="uz">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MMG — Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: #07100b;
+            color: #e6f8eb;
+            font: 15px system-ui
+        }
+
+        header {
+            padding: 24px 5%;
+            border-bottom: 1px solid #254431;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        small,
+        .green {
+            color: #14e78a
+        }
+
+        h1 {
+            margin: 6px 0;
+            font-size: 26px
+        }
+
+        main {
+            max-width: 1200px;
+            margin: auto;
+            padding: 25px
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 15px
+        }
+
+        .card,
+        section {
+            background: #102017;
+            border: 1px solid #284b35;
+            border-radius: 16px;
+            padding: 22px
+        }
+
+        .card strong {
+            display: block;
+            font-size: 34px;
+            color: #10e584;
+            margin-top: 8px
+        }
+
+        section {
+            margin-top: 24px;
+            overflow: auto
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 600px
+        }
+
+        td,
+        th {
+            text-align: left;
+            border-bottom: 1px solid #2b4433;
+            padding: 12px;
+            vertical-align: top
+        }
+
+        th {
+            color: #79b493
+        }
+
+        button,
+        select {
+            background: #153a27;
+            border: 1px solid #33764c;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #c5ffe0;
+            cursor: pointer
+        }
+
+        form {
+            display: inline
+        }
+
+        p {
+            color: #91aa99
+        }
+
+        h2 {
+            font-size: 19px
+        }
+
+        @media(max-width:650px) {
+            .stats {
+                grid-template-columns: 1fr
+            }
+
+            header {
+                align-items: flex-start;
+                gap: 15px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div><small>MILLIY ME’MOR GROUP</small>
+            <h1>🟢 ULTIMATE CONTROL</h1><small>SUPER ADMIN • DASHBOARD</small>
+        </div>
+        <form method="post" action="/admin/logout"><input type="hidden" name="csrf"
+                value="{{ csrf }}"><button>Chiqish</button></form>
+    </header>
+    <main>
+        <div class="stats">
+            <div class="card">👥 Foydalanuvchilar<strong>{{ stats.users }}</strong></div>
+            <div class="card">📩 Jami murojaatlar<strong>{{ stats.inquiries }}</strong></div>
+            <div class="card">🟢 Yangi murojaatlar<strong>{{ stats.new }}</strong></div>
+        </div>
+        <section>
+            <h2>📩 Murojaatlarni boshqarish</h2>
+            <table>
+                <tr>
+                    <th>#</th>
+                    <th>Mijoz</th>
+                    <th>Xabar</th>
+                    <th>Sana</th>
+                    <th>Holat</th>
+                </tr>{% for x in inquiries %}<tr>
+                    <td>{{ x.id }}</td>
+                    <td>{{ x.name }}<br><small>{{ x.user_id }}</small></td>
+                    <td>{{ x.message }}</td>
+                    <td>{{ x.created }}</td>
+                    <td>
+                        <form method="post" action="/admin/status/{{ x.id }}"><input type="hidden" name="csrf"
+                                value="{{ csrf }}"><select name="status" onchange="this.form.submit()">{% for s in
+                                ['Yangi','Ko‘rilmoqda','Yakunlangan'] %}<option value="{{ s }}" {% if x.status==s
+                                    %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></form>
+                    </td>
+                </tr>{% else %}<tr>
+                    <td colspan="5">Hali murojaat kelmagan.</td>
+                </tr>{% endfor %}
+            </table>
+        </section>
+        <section>
+            <h2>👥 Foydalanuvchilar</h2>
+            <table>
+                <tr>
+                    <th>Telegram ID</th>
+                    <th>Ism</th>
+                    <th>Oxirgi faollik (UTC)</th>
+                </tr>{% for x in users %}<tr>
+                    <td>{{ x.id }}</td>
+                    <td>{{ x.name }}</td>
+                    <td>{{ x.last_seen }}</td>
+                </tr>{% else %}<tr>
+                    <td colspan="3">Hali foydalanuvchi yo‘q.</td>
+                </tr>{% endfor %}
+            </table>
+        </section>
+        <p>⚠ Render Free diskida SQLite ma’lumotlari deploy yoki restartdan so‘ng yo‘qolishi mumkin. Doimiy saqlash
+            uchun tashqi baza ulang.</p>
+    </main>
+</body>
+
+</html>
