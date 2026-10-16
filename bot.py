@@ -13,17 +13,29 @@ from telegram.ext import (
     filters,
 )
 
-# BOT SOZLAMALARI
-TOKEN = os.environ["BOT_TOKEN"]
+# ==============================
+# MILLIY ME'MOR GROUP BOT
+# ==============================
+
+BOT_TOKEN = os.environ["BOT_TOKEN"]
 ADMIN_ID = int(os.environ["ADMIN_ID"])
 ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 
-# IJTIMOIY TARMOQLAR
-INSTAGRAM = "https://instagram.com/milliymemorgroup"
-TELEGRAM = "https://t.me/milliymemorgoup"
-ADMIN_LINK = "https://t.me/u777zzzz"
+PORT = int(os.environ.get("PORT", "10000"))
 
-# MUTAXASSISLAR
+WEBHOOK_URL = os.environ.get(
+    "RENDER_EXTERNAL_URL",
+    "https://milliy-memor-bot.onrender.com"
+).rstrip("/")
+
+# IJTIMOIY TARMOQLAR
+
+INSTAGRAM_URL = "https://instagram.com/milliymemorgroup"
+TELEGRAM_URL = "https://t.me/milliymemorgoup"
+ADMIN_URL = "https://t.me/u777zzzz"
+
+# TELEFON RAQAMLAR
+
 PHONES = [
     ("1-mutaxassis", "+998938181516"),
     ("2-mutaxassis", "+998938177100"),
@@ -32,7 +44,8 @@ PHONES = [
 
 WAIT_PASSWORD = 1
 
-# ODDIY MENYU
+# ASOSIY MENYU
+
 MAIN_MENU = ReplyKeyboardMarkup(
     [
         ["📸 Instagram", "✈️ Telegram"],
@@ -42,6 +55,7 @@ MAIN_MENU = ReplyKeyboardMarkup(
 )
 
 # ADMIN MENYU
+
 ADMIN_MENU = ReplyKeyboardMarkup(
     [
         ["📊 Statistika", "📩 Murojaatlar"],
@@ -51,15 +65,21 @@ ADMIN_MENU = ReplyKeyboardMarkup(
 )
 
 
+# ==============================
 # START
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# ==============================
+
+async def start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
     context.user_data["is_admin"] = False
 
-    welcome = (
+    text = (
         "🏛 MILLIY ME’MOR GROUP\n\n"
         "Assalomu alaykum! 👋\n\n"
-        "Milliy Me’mor Group rasmiy Telegram botiga "
-        "xush kelibsiz!\n\n"
+        "Milliy Me’mor Group rasmiy Telegram "
+        "botiga xush kelibsiz!\n\n"
         "🏡 Orzuyingizdagi uy — bizning loyihamiz!\n\n"
         "📐 Arxitektura va loyihalash\n"
         "🏠 Zamonaviy uy loyihalari\n"
@@ -71,52 +91,73 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_text(
-        welcome,
+        text,
         reply_markup=MAIN_MENU
     )
 
 
-# TELEGRAM ID NI BILISH
-async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# ==============================
+# TELEGRAM ID
+# ==============================
+
+async def myid(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    user_id = update.effective_user.id
+
     await update.message.reply_text(
-        f"🆔 Sizning Telegram ID: {update.effective_user.id}"
+        f"🆔 Sizning Telegram ID: {user_id}"
     )
 
 
-# ADMIN PANELGA KIRISH
-async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# ==============================
+# ADMIN LOGIN
+# ==============================
+
+async def admin(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    user_id = update.effective_user.id
+
     if update.effective_chat.type != "private":
         await update.message.reply_text(
-            "🔒 Admin panelga shaxsiy chat orqali kiring."
+            "🔒 Admin panelga shaxsiy chatdan kiring."
         )
         return ConversationHandler.END
 
-    if update.effective_user.id != ADMIN_ID:
+    if user_id != ADMIN_ID:
         await update.message.reply_text(
             "⛔ Sizda admin huquqi yo‘q!\n\n"
-            "ID'ingizni bilish uchun /myid yozing."
+            "ID'ingizni /myid orqali tekshiring."
         )
         return ConversationHandler.END
 
     await update.message.reply_text(
         "🔐 Admin maxfiy kodini kiriting:"
     )
+
     return WAIT_PASSWORD
 
 
-# MAXFIY KODNI TEKSHIRISH
+# ==============================
+# ADMIN PAROL TEKSHIRISH
+# ==============================
+
 async def check_password(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
-    if update.effective_user.id != ADMIN_ID:
-        return ConversationHandler.END
-
+    user_id = update.effective_user.id
     password = update.message.text
 
-    correct = hmac.compare_digest(
-        password.encode("utf-8"),
-        ADMIN_PASSWORD.encode("utf-8")
+    correct = (
+        user_id == ADMIN_ID
+        and hmac.compare_digest(
+            password,
+            ADMIN_PASSWORD
+        )
     )
 
     # Parol xabarini o‘chirishga urinish
@@ -134,6 +175,7 @@ async def check_password(
             "🔐 Admin panel ochildi.",
             reply_markup=ADMIN_MENU
         )
+
     else:
         await update.effective_chat.send_message(
             "❌ Maxfiy kod noto‘g‘ri!"
@@ -142,8 +184,14 @@ async def check_password(
     return ConversationHandler.END
 
 
+# ==============================
 # TUGMALAR
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# ==============================
+
+async def buttons(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
     message = update.message.text
 
     is_admin = (
@@ -151,24 +199,25 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         and context.user_data.get("is_admin", False)
     )
 
+    # ADMIN TUGMALARI
+
     if is_admin:
+
         if message == "📊 Statistika":
             await update.message.reply_text(
                 "📊 STATISTIKA\n\n"
-                "Bu bo‘lim hozircha demo.\n"
-                "Statistika bazasi hali ulanmagan."
+                "Bu bo‘lim hozircha demo."
             )
             return
 
-        elif message == "📩 Murojaatlar":
+        if message == "📩 Murojaatlar":
             await update.message.reply_text(
                 "📩 MUROJAATLAR\n\n"
-                "Bu bo‘lim hozircha demo.\n"
-                "Murojaatlarni saqlash tizimi hali ulanmagan."
+                "Bu bo‘lim hozircha demo."
             )
             return
 
-        elif message == "🚪 Admin paneldan chiqish":
+        if message == "🚪 Admin paneldan chiqish":
             context.user_data["is_admin"] = False
 
             await update.message.reply_text(
@@ -177,40 +226,51 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
+    # INSTAGRAM
+
     if message == "📸 Instagram":
         await update.message.reply_text(
-            "📸 Instagram sahifamiz:\n\n"
-            f'<a href="{INSTAGRAM}">'
+            "📸 Bizning Instagram sahifamiz:\n\n"
+            f'<a href="{INSTAGRAM_URL}">'
             "Instagram sahifasiga o‘tish</a>",
             parse_mode="HTML",
             disable_web_page_preview=True
         )
 
+    # TELEGRAM
+
     elif message == "✈️ Telegram":
         await update.message.reply_text(
-            "✈️ Telegram kanalimiz:\n\n"
-            f'<a href="{TELEGRAM}">'
+            "✈️ Bizning Telegram kanalimiz:\n\n"
+            f'<a href="{TELEGRAM_URL}">'
             "Telegram kanaliga o‘tish</a>",
             parse_mode="HTML",
             disable_web_page_preview=True
         )
 
+    # BIZ BILAN BOG‘LANISH
+
     elif message == "📞 Biz bilan bog‘lanish":
+
         text = (
             "🏛 <b>MILLIY ME’MOR GROUP</b>\n\n"
             "📞 <b>BIZ BILAN BOG‘LANISH</b>\n\n"
             "👨‍💼 <b>Administrator:</b>\n"
-            f'<a href="{ADMIN_LINK}">@u777zzzz</a>\n\n'
-            "👷 <b>Mutaxassislarimiz:</b>\n\n"
+            f'<a href="{ADMIN_URL}">@u777zzzz</a>\n\n'
+            "👷 <b>Mutaxassislarimiz:</b>\n"
         )
 
         for name, phone in PHONES:
             text += (
-                f"📱 {html.escape(name)}: "
-                f"{html.escape(phone)}\n"
+                f"\n📱 {html.escape(name)}: "
+                f"{html.escape(phone)}"
             )
 
-        text += "\n💎 Kelajak uchun sifatli makon!"
+        text += (
+            "\n\n📍 Sirdaryo viloyati, "
+            "Boyovut tumani\n\n"
+            "💎 Kelajak uchun sifatli makon!"
+        )
 
         await update.message.reply_text(
             text,
@@ -219,16 +279,20 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# BOTNI ISHGA TUSHIRISH
+# ==============================
+# RENDER WEBHOOK
+# ==============================
+
 def main():
+
     app = (
         ApplicationBuilder()
-        .token(TOKEN)
+        .token(BOT_TOKEN)
         .concurrent_updates(False)
         .build()
     )
 
-    admin_login = ConversationHandler(
+    admin_handler = ConversationHandler(
         entry_points=[
             CommandHandler("admin", admin)
         ],
@@ -245,9 +309,15 @@ def main():
         ],
     )
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("myid", myid))
-    app.add_handler(admin_login)
+    app.add_handler(
+        CommandHandler("start", start)
+    )
+
+    app.add_handler(
+        CommandHandler("myid", myid)
+    )
+
+    app.add_handler(admin_handler)
 
     app.add_handler(
         MessageHandler(
@@ -256,10 +326,8 @@ def main():
         )
     )
 
-    print("MILLIY ME’MOR GROUP BOT ISHLAYAPTI!")
-    app.run_polling()
-if __name__ == "__main__":
-    main()
+    print("🏛 MILLIY ME'MOR GROUP BOT STARTING...")
+
     app.run_webhook(
         listen="0.0.0.0",
         port=PORT,
